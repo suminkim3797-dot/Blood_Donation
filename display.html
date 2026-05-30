@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Drop Saves Lives — Live Display</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+  /* ── REPLACE THIS URL WITH YOUR FIREBASE URL ── */
+  :root {
+    --firebase-url: "https://YOUR-PROJECT-ID-default-rtdb.firebaseio.com";
+    --red: #C8102E;
+    --red-dark: #8B0A1F;
+    --cream: #FDF8F0;
+    --yellow: #F5D97A;
+    --gray: #4A4A4A;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #1A0A0A;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── BACKGROUND ── */
+  .bg {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #2A0808 0%, #0F0303 100%);
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .slide {
+    position: relative; z-index: 1;
+    width: 1920px; height: 1080px;
+    display: grid;
+    grid-template-columns: 520px 1fr;
+    align-items: center;
+    padding: 0 80px;
+    gap: 80px;
+    transform-origin: top left;
+  }
+
+  /* ── LEFT: blood pack ── */
+  .pack-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .pack-wrap {
+    position: relative;
+    width: 380px;
+    height: 520px;
+  }
+
+  .pack-svg { width: 380px; height: 520px; }
+
+  .blood-fill { transition: height 1.2s cubic-bezier(0.4,0,0.2,1), y 1.2s cubic-bezier(0.4,0,0.2,1); }
+  .blood-surface { transition: d 1.2s cubic-bezier(0.4,0,0.2,1); }
+
+  .pack-pct {
+    font-size: 52px;
+    font-weight: 700;
+    color: #C8102E;
+    letter-spacing: -.02em;
+    text-align: center;
+    text-shadow: 0 0 40px rgba(200,16,46,0.4);
+    transition: all 0.8s;
+  }
+  .pack-pct span { font-size: 22px; font-weight: 400; color: rgba(200,16,46,0.7); }
+
+  /* ── RIGHT: content ── */
+  .content-side { display: flex; flex-direction: column; gap: 40px; }
+
+  .campaign-tag {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(245,217,122,0.7);
+  }
+
+  .headline {
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 1;
+    color: #FFFFFF;
+    letter-spacing: -.02em;
+  }
+  .headline em { font-style: normal; color: #C8102E; }
+
+  .sub {
+    font-size: 22px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+    max-width: 560px;
+  }
+
+  .scan-counter {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 28px;
+    background: rgba(200,16,46,0.12);
+    border: 1px solid rgba(200,16,46,0.3);
+    border-radius: 16px;
+    width: fit-content;
+  }
+  .scan-num {
+    font-size: 64px;
+    font-weight: 800;
+    color: #C8102E;
+    line-height: 1;
+    transition: all 0.6s;
+    min-width: 120px;
+  }
+  .scan-labels { display: flex; flex-direction: column; gap: 2px; }
+  .scan-label-top { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: .05em; text-transform: uppercase; }
+  .scan-label-bot { font-size: 13px; color: rgba(255,255,255,0.45); }
+
+  /* milestone strip */
+  .milestones {
+    display: flex;
+    gap: 16px;
+  }
+  .ms {
+    flex: 1;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    text-align: center;
+    transition: all 0.6s;
+  }
+  .ms.reached {
+    border-color: rgba(200,16,46,0.5);
+    background: rgba(200,16,46,0.12);
+  }
+  .ms-val { font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.4); transition: color 0.6s; }
+  .ms.reached .ms-val { color: #C8102E; }
+  .ms-lbl { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; transition: color 0.6s; }
+  .ms.reached .ms-lbl { color: rgba(255,255,255,0.6); }
+
+  /* progress bar -->
+  .prog-wrap {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .prog-labels { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.4); }
+  .prog-track {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    background: #C8102E;
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* live dot */
+  .live {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(200,16,46,0.7);
+    position: absolute; top: 36px; right: 80px;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #C8102E;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* pulse on update */
+  @keyframes numPop { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+  .pop { animation: numPop 0.5s cubic-bezier(0.4,0,0.2,1); }
+
+  /* scale to fill screen regardless of resolution */
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="slide" id="slide">
+  <div class="live"><div class="live-dot"></div> Live</div>
+
+  <!-- LEFT: blood pack visual -->
+  <div class="pack-side">
+    <div class="pack-wrap">
+      <svg class="pack-svg" viewBox="0 0 380 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="bc">
+            <path d="M50 118 Q50 100 68 94 L190 86 L312 94 Q330 100 330 118 L330 428 Q330 452 308 459 L190 466 L72 459 Q50 452 50 428 Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- hook -->
+        <rect x="164" y="6" width="52" height="22" rx="8" fill="#5A5550"/>
+        <path d="M178 28 L178 14 Q178 4 190 4 Q202 4 202 14 L202 28" fill="none" stroke="#4A4540" stroke-width="8" stroke-linecap="round"/>
+        <path d="M180 28 L180 15 Q180 7 190 7 Q200 7 200 15 L200 28" fill="none" stroke="#6A6560" stroke-width="4" stroke-linecap="round"/>
+
+        <!-- hanger strip -->
+        <rect x="146" y="42" width="88" height="34" rx="10" fill="#4A4540" stroke="#3A3530" stroke-width="1.5"/>
+        <circle cx="168" cy="59" r="8" fill="#3A3530"/>
+        <circle cx="212" cy="59" r="8" fill="#3A3530"/>
+
+        <!-- outer bag rim -->
+        <path d="M47 120 Q47 100 66 93 L190 85 L314 93 Q333 100 333 120 L333 430 Q333 455 310 462 L190 470 L70 462 Q47 455 47 430 Z"
+              fill="#3A3530"/>
+
+        <!-- bag body (empty area) -->
+        <path d="M50 118 Q50 100 68 94 L190 86 L312 94 Q330 100 330 118 L330 428 Q330 452 308 459 L190 466 L72 459 Q50 452 50 428 Z"
+              fill="#E8E2D8"/>
+
+        <!-- blood fill (animated) -->
+        <g clip-path="url(#bc)">
+          <rect id="bf" x="48" y="466" width="286" height="0" fill="#C8102E" class="blood-fill"/>
+          <path id="bs" d="" fill="#E01828" class="blood-surface"/>
+        </g>
+
+        <!-- bag overlay / plastic sheen -->
+        <path d="M50 118 Q50 100 68 94 L190 86 L312 94 Q330 100 330 118 L330 428 Q330 452 308 459 L190 466 L72 459 Q50 452 50 428 Z"
+              fill="none" stroke="#C8C4BC" stroke-width="2.5"/>
+        <path d="M68 160 Q60 280 62 380 Q64 430 70 452"
+              fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="18" stroke-linecap="round"/>
+        <ellipse cx="180" cy="148" rx="80" ry="22" fill="rgba(255,255,255,0.14)"/>
+
+        <!-- label -->
+        <rect x="74" y="140" width="232" height="192" rx="8" fill="rgba(255,255,255,0.82)" stroke="#D0CCc4" stroke-width="1.5"/>
+        <!-- teal sticker -->
+        <rect x="130" y="148" width="164" height="88" rx="6" fill="#A8D4D8" stroke="#88B8BC" stroke-width="1"/>
+        <!-- barcode lines -->
+        <g fill="#222" transform="translate(136,155)">
+          <rect x="0" y="0" width="2" height="42"/><rect x="5" y="0" width="3" height="42"/>
+          <rect x="11" y="0" width="2" height="42"/><rect x="16" y="0" width="4" height="42"/>
+          <rect x="23" y="0" width="2" height="42"/><rect x="28" y="0" width="3" height="42"/>
+          <rect x="34" y="0" width="2" height="42"/><rect x="39" y="0" width="4" height="42"/>
+          <rect x="46" y="0" width="2" height="42"/><rect x="51" y="0" width="3" height="42"/>
+          <rect x="57" y="0" width="2" height="42"/><rect x="62" y="0" width="4" height="42"/>
+          <rect x="69" y="0" width="2" height="42"/><rect x="74" y="0" width="3" height="42"/>
+          <rect x="80" y="0" width="2" height="42"/><rect x="85" y="0" width="4" height="42"/>
+          <rect x="92" y="0" width="2" height="42"/><rect x="97" y="0" width="3" height="42"/>
+          <rect x="103" y="0" width="2" height="42"/>
+        </g>
+        <!-- blood drop on label -->
+        <path d="M100 188 Q92 174 92 168 Q92 158 100 158 Q108 158 108 168 Q108 174 100 188Z" fill="#C8102E"/>
+        <!-- label lines -->
+        <rect x="82" y="202" width="60" height="7" rx="3.5" fill="#C8C4BC" opacity="0.5"/>
+        <rect x="82" y="216" width="48" height="6" rx="3" fill="#C8C4BC" opacity="0.4"/>
+        <rect x="82" y="228" width="54" height="6" rx="3" fill="#C8C4BC" opacity="0.4"/>
+        <!-- red warning bar -->
+        <rect x="82" y="248" width="232" height="24" rx="3" fill="#C8102E" opacity="0.75"/>
+        <rect x="96" y="254" width="100" height="12" rx="6" fill="white" opacity="0.5"/>
+
+        <!-- ports top -->
+        <rect x="148" y="72" width="22" height="36" rx="7" fill="#C8C4BC" stroke="#B4B0A8" stroke-width="1.5"/>
+        <rect x="152" y="72" width="14" height="16" rx="5" fill="#C8102E"/>
+        <rect x="210" y="72" width="22" height="36" rx="7" fill="#C8C4BC" stroke="#B4B0A8" stroke-width="1.5"/>
+        <rect x="214" y="72" width="14" height="16" rx="5" fill="#C8102E"/>
+        <rect x="174" y="66" width="32" height="16" rx="6" fill="#B4B0A8"/>
+
+        <!-- bottom ports -->
+        <ellipse cx="132" cy="474" rx="24" ry="18" fill="#C8C4BC" stroke="#B0ACA4" stroke-width="2"/>
+        <rect x="120" y="468" width="24" height="60" rx="8" fill="#C8C4BC" stroke="#B4B0A8" stroke-width="1.5"/>
+        <rect x="126" y="474" width="12" height="48" rx="5" fill="#D4D0C8"/>
+        <ellipse cx="248" cy="474" rx="24" ry="18" fill="#C8C4BC" stroke="#B0ACA4" stroke-width="2"/>
+        <rect x="236" y="468" width="24" height="60" rx="8" fill="#C8C4BC" stroke="#B4B0A8" stroke-width="1.5"/>
+        <rect x="242" y="474" width="12" height="48" rx="5" fill="#D4D0C8"/>
+
+        <!-- tubes -->
+        <path d="M132 528 Q130 480 128 440" fill="none" stroke="#C8C4BC" stroke-width="14" stroke-linecap="round"/>
+        <path d="M248 528 Q250 480 252 440" fill="none" stroke="#C8C4BC" stroke-width="14" stroke-linecap="round"/>
+        <path d="M132 528 Q190 548 248 528" fill="none" stroke="#C0BCB4" stroke-width="14" stroke-linecap="round"/>
+        <rect x="172" y="524" width="36" height="26" rx="10" fill="#C8C4BC" stroke="#B4B0A8" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="pack-pct" id="pctDisplay">0<span>%</span></div>
+  </div>
+
+  <!-- RIGHT: info -->
+  <div class="content-side">
+    <div class="campaign-tag">East London · QEOP · 2025</div>
+
+    <div class="headline">One Drop<br><em>Saves Lives</em></div>
+
+    <div class="sub">Every QR scan brings us one step closer to a full blood pack — and one step closer to saving a sickle cell patient's life.</div>
+
+    <div class="scan-counter">
+      <div class="scan-num" id="scanNum">0</div>
+      <div class="scan-labels">
+        <div class="scan-label-top">QR scans today</div>
+        <div class="scan-label-bot">Goal: <span id="goalDisp">500</span> scans</div>
+      </div>
+    </div>
+
+    <div class="prog-wrap">
+      <div class="prog-labels">
+        <span>Campaign progress</span>
+        <span id="progLbl">0 / 500</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill" id="progBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="milestones">
+      <div class="ms" data-n="50">
+        <div class="ms-val">50</div>
+        <div class="ms-lbl">10% full</div>
+      </div>
+      <div class="ms" data-n="150">
+        <div class="ms-val">150</div>
+        <div class="ms-lbl">30% full</div>
+      </div>
+      <div class="ms" data-n="300">
+        <div class="ms-val">300</div>
+        <div class="ms-lbl">60% full</div>
+      </div>
+      <div class="ms" data-n="500">
+        <div class="ms-val">500</div>
+        <div class="ms-lbl">FULL!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// STEP 1: Replace with YOUR Firebase project URL
+// ══════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  databaseURL: "https://bloodpanel-dd4ae-default-rtdb.firebaseio.com/"
+};
+const GOAL = 500;
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+const ref = db.ref("bloodpack/scans");
+
+// Scale slide to fill any screen
+function scaleSlide(){
+  const s = document.getElementById('slide');
+  const scaleX = window.innerWidth / 1920;
+  const scaleY = window.innerHeight / 1080;
+  const scale = Math.min(scaleX, scaleY);
+  s.style.transform = `scale(${scale})`;
+  s.style.position = 'fixed';
+  s.style.left = ((window.innerWidth - 1920*scale)/2) + 'px';
+  s.style.top = ((window.innerHeight - 1080*scale)/2) + 'px';
+}
+scaleSlide();
+window.addEventListener('resize', scaleSlide);
+
+// Update all visuals from scan count
+function render(scans){
+  const p = Math.min(scans / GOAL, 1);
+  const BAG_H = 380; // pixel height of fillable area in SVG
+  const BAG_BOTTOM = 466;
+  const fillH = Math.round(p * BAG_H);
+  const fillY = BAG_BOTTOM - fillH;
+
+  const bf = document.getElementById('bf');
+  bf.setAttribute('y', fillY);
+  bf.setAttribute('height', fillH);
+
+  const bs = document.getElementById('bs');
+  if(fillH > 6){
+    bs.setAttribute('d',
+      `M48 ${fillY} Q120 ${fillY-10} 190 ${fillY} Q260 ${fillY+10} 334 ${fillY} L334 ${BAG_BOTTOM} L48 ${BAG_BOTTOM} Z`
+    );
+  } else {
+    bs.setAttribute('d','');
+  }
+
+  const pct = Math.round(p * 100);
+  document.getElementById('pctDisplay').innerHTML = pct + '<span>%</span>';
+
+  const sn = document.getElementById('scanNum');
+  sn.textContent = scans.toLocaleString();
+  sn.classList.remove('pop');
+  void sn.offsetWidth;
+  sn.classList.add('pop');
+
+  document.getElementById('progBar').style.width = Math.min(p*100, 100) + '%';
+  document.getElementById('progLbl').textContent = scans + ' / ' + GOAL;
+
+  document.querySelectorAll('.ms').forEach(m => {
+    m.classList.toggle('reached', scans >= parseInt(m.dataset.n));
+  });
+}
+
+// Listen for real-time updates from Firebase
+ref.on('value', snap => {
+  const val = snap.val() || 0;
+  render(val);
+});
+</script>
+</body>
+</html>
