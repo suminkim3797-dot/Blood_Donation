@@ -14,7 +14,7 @@ const FIREBASE_CONFIG = {
 };
 
 // ── Replace with your actual AR / TGA Ci platform URL ──
-const AR_URL = "https://www.nhsbt.nhs.uk/how-you-can-help/donate-blood/";
+const AR_URL = "https://suminkim3797-dot.github.io/Blood_Donation/ar_story.html";
 
 firebase.initializeApp(FIREBASE_CONFIG);
 firebase.database().ref("bloodpack/scans").transaction(n => (n || 0) + 1);
