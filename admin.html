@@ -212,12 +212,12 @@
 <div class="card">
   <div class="card-title">Admin Panel — Blood Pack Tracker</div>
   <div class="big-num" id="bigNum">0</div>
-  <div class="pct-row" id="pctRow">0% of goal (500 scans)</div>
+  <div class="pct-row" id="pctRow">0% of goal (50 scans)</div>
   <div class="prog-track">
     <div class="prog-fill" id="pBar" style="width:0%"></div>
   </div>
   <div class="prog-labels">
-    <span>0</span><span id="goalLbl">500</span>
+    <span>0</span><span id="goalLbl">50</span>
   </div>
 
   <div class="stat-mini">
@@ -263,7 +263,7 @@
 const FIREBASE_CONFIG = {
   databaseURL: "https://bloodpanel-dd4ae-default-rtdb.firebaseio.com/"
 };
-const GOAL = 500;
+const GOAL = 50;
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
