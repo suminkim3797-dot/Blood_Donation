@@ -9,12 +9,10 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif;}
 
 #bgVideo{
-  position:fixed;
-  top:0;left:0;
+  position:fixed;top:0;left:0;
   width:100%;height:100%;
-  object-fit:contain;  /* show full video, no cropping */
-  z-index:0;
-  background:#000;
+  object-fit:contain;
+  z-index:0;background:#000;
 }
 
 .overlay{
@@ -35,24 +33,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Se
   gap:28px;padding:32px;text-align:center;
 }
 #startScreen.hidden{display:none;}
-
 .start-drop{width:64px;height:80px;animation:dropPulse 1.5s ease-in-out infinite alternate;}
 @keyframes dropPulse{from{transform:scale(1)}to{transform:scale(1.1)}}
-
 .start-title{font-size:28px;font-weight:800;color:#C8102E;line-height:1.2;}
 .start-sub{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.6;max-width:280px;}
-
 .start-btn{
-  padding:18px 48px;
-  background:#C8102E;color:white;
-  font-size:17px;font-weight:700;
-  border:none;border-radius:99px;cursor:pointer;
+  padding:18px 48px;background:#C8102E;color:white;
+  font-size:17px;font-weight:700;border:none;border-radius:99px;cursor:pointer;
   animation:btnGlow 2s ease-in-out infinite;
 }
-@keyframes btnGlow{
-  0%,100%{box-shadow:0 0 0 0 rgba(200,16,46,0.5)}
-  50%{box-shadow:0 0 0 14px rgba(200,16,46,0)}
-}
+@keyframes btnGlow{0%,100%{box-shadow:0 0 0 0 rgba(200,16,46,0.5)}50%{box-shadow:0 0 0 14px rgba(200,16,46,0)}}
 
 /* ── HUD ── */
 .hud{
@@ -66,45 +56,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Se
 .live-dot{width:7px;height:7px;border-radius:50%;background:#C8102E;animation:blink 1.3s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
 
-/* ── SUBTITLE ── */
-.subtitle-wrap{
-  position:fixed;bottom:110px;left:0;right:0;z-index:10;
-  padding:0 20px;display:flex;justify-content:center;
-}
-.subtitle-box{
-  background:rgba(0,0,0,0.72);
-  border:1px solid rgba(200,16,46,0.35);
-  border-radius:14px;padding:14px 20px;
-  max-width:360px;width:100%;
-  backdrop-filter:blur(6px);
-  opacity:0;transform:translateY(8px);
-  transition:opacity 0.4s ease,transform 0.4s ease;
-  min-height:60px;display:flex;align-items:center;justify-content:center;
-}
-.subtitle-box.visible{opacity:1;transform:translateY(0);}
-.subtitle-text{font-size:16px;line-height:1.55;text-align:center;color:white;font-weight:400;}
-.subtitle-text em{font-style:normal;color:#F5D97A;font-weight:600;}
-
-/* ── BOTTOM BAR ── */
+/* ── BOTTOM BAR (during video) ── */
 .bottom-bar{
   position:fixed;bottom:0;left:0;right:0;z-index:10;
   padding:12px 20px 32px;
   background:linear-gradient(0deg,rgba(0,0,0,0.75) 0%,transparent 100%);
   display:flex;flex-direction:column;align-items:center;gap:8px;
 }
-.nhs-btn{
+.info-btn{
   width:100%;max-width:320px;
-  padding:15px 24px;background:#C8102E;color:white;
-  font-size:15px;font-weight:700;border:none;border-radius:99px;
-  cursor:pointer;text-decoration:none;
+  padding:15px 24px;background:rgba(255,255,255,0.12);color:white;
+  font-size:14px;font-weight:600;border:1px solid rgba(255,255,255,0.3);
+  border-radius:99px;cursor:pointer;text-decoration:none;
   display:flex;align-items:center;justify-content:center;gap:10px;
-  animation:btnGlow 2.5s ease-in-out infinite;
+  backdrop-filter:blur(6px);
   opacity:0;transform:translateY(10px);
   transition:opacity 0.6s ease,transform 0.6s ease;
 }
-.nhs-btn.visible{opacity:1;transform:translateY(0);}
-.nhs-icon{width:22px;height:22px;background:white;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.nhs-icon span{font-size:9px;font-weight:900;color:#003087;letter-spacing:-.5px;}
+.info-btn.visible{opacity:1;transform:translateY(0);}
+.info-btn:hover{background:rgba(255,255,255,0.2);}
+.info-icon{font-size:18px;}
 .replay-btn{font-size:12px;color:rgba(255,255,255,0.4);background:transparent;border:none;cursor:pointer;text-decoration:underline;opacity:0;transition:opacity 0.6s ease;}
 .replay-btn.visible{opacity:1;}
 
@@ -124,14 +95,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Se
 .final-stat{font-size:58px;font-weight:900;color:#C8102E;line-height:1;}
 .final-stat-label{font-size:14px;color:rgba(255,255,255,0.5);margin-top:-4px;}
 .final-sub{font-size:15px;color:rgba(255,255,255,0.65);line-height:1.6;max-width:280px;}
+.final-btn-group{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;}
 .final-nhs-btn{
   width:100%;max-width:300px;padding:16px 24px;
-  background:#C8102E;color:white;font-size:16px;font-weight:700;
+  background:#C8102E;color:white;font-size:15px;font-weight:700;
   border:none;border-radius:99px;cursor:pointer;text-decoration:none;
-  display:flex;align-items:center;justify-content:center;gap:10px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
   animation:btnGlow 2.5s ease-in-out infinite;
 }
+.final-info-btn{
+  width:100%;max-width:300px;padding:14px 24px;
+  background:rgba(255,255,255,0.1);color:white;font-size:14px;font-weight:600;
+  border:1px solid rgba(255,255,255,0.25);border-radius:99px;cursor:pointer;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
 .final-replay{font-size:13px;color:rgba(255,255,255,0.35);background:transparent;border:none;cursor:pointer;text-decoration:underline;}
+.nhs-icon{width:22px;height:22px;background:white;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.nhs-icon span{font-size:9px;font-weight:900;color:#003087;letter-spacing:-.5px;}
 </style>
 </head>
 <body>
@@ -147,7 +127,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Se
   <button class="start-btn" onclick="startExperience()">▶ &nbsp;Tap to watch</button>
 </div>
 
-<!-- VIDEO — no muted attribute at all so sound plays -->
+<!-- VIDEO -->
 <video id="bgVideo" playsinline webkit-playsinline>
   <source src="story_video.mp4" type="video/mp4">
 </video>
@@ -159,25 +139,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Se
   <div class="live-badge"><div class="live-dot"></div> AR Story</div>
 </div>
 
-<!-- SUBTITLES -->
-<div class="subtitle-wrap">
-  <div class="subtitle-box" id="subBox">
-    <div class="subtitle-text" id="subText"></div>
-  </div>
-</div>
-
-<!-- BOTTOM -->
+<!-- BOTTOM BAR — sickle cell info link during video -->
 <div class="bottom-bar">
-  <a class="nhs-btn" id="nhsBtn"
-     href="https://www.blood.co.uk/the-donation-process/simple-steps-to-giving-blood/"
+  <a class="info-btn" id="infoBtn"
+     href="https://www.nhs.uk/conditions/sickle-cell-disease/"
      target="_blank">
-    <div class="nhs-icon"><span>NHS</span></div>
-    Register to donate blood →
+    <span class="info-icon">🩸</span>
+    What is sickle cell disease?
   </a>
   <button class="replay-btn" id="replayBtn" onclick="replay()">Watch again</button>
 </div>
 
-<!-- FINAL -->
+<!-- FINAL CARD -->
 <div class="final-overlay" id="finalCard">
   <svg class="final-drop" viewBox="0 0 56 70" fill="none">
     <path d="M28 4 Q6 30 6 46 Q6 62 28 66 Q50 62 50 46 Q50 30 28 4Z" fill="#C8102E"/>
@@ -187,92 +160,50 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Se
   <div class="final-stat">3</div>
   <div class="final-stat-label">lives saved per donation</div>
   <div class="final-sub">You could be the reason someone gets their life back. Register today — it takes 5 minutes.</div>
-  <a class="final-nhs-btn"
-     href="https://www.blood.co.uk/the-donation-process/simple-steps-to-giving-blood/"
-     target="_blank">
-    <div class="nhs-icon"><span>NHS</span></div>
-    Register to donate blood →
-  </a>
-  <button class="final-replay" onclick="replay()">Watch again</button>
+  <div class="final-btn-group">
+    <a class="final-nhs-btn"
+       href="https://www.blood.co.uk/the-donation-process/simple-steps-to-giving-blood/"
+       target="_blank">
+      <div class="nhs-icon"><span>NHS</span></div>
+      Register to donate blood →
+    </a>
+    <a class="final-info-btn"
+       href="https://www.nhs.uk/conditions/sickle-cell-disease/"
+       target="_blank">
+      🩸 &nbsp;Learn about sickle cell disease
+    </a>
+    <button class="final-replay" onclick="replay()">Watch again</button>
+  </div>
 </div>
 
 <script>
-const lines = [
-  { t: 0,    text: "I always know the exact moment the <em>relief starts kicking in.</em>" },
-  { t: 3.5,  text: "My body feels lighter… and the pain <em>slowly fades away.</em>" },
-  { t: 7,    text: "Suddenly, I'm not thinking about hospitals anymore." },
-  { t: 10,   text: "I'm thinking about school, friends… <em>just living.</em>" },
-  { t: 13.5, text: "When you have sickle cell, donors don't just give you blood —" },
-  { t: 17,   text: "<em>you give us our lives back.</em>" },
-  { t: 20,   text: "Your one donation can change my week, my month… <em>my lifetime.</em>" },
-];
-
 const video    = document.getElementById('bgVideo');
-const subBox   = document.getElementById('subBox');
-const subText  = document.getElementById('subText');
-const nhsBtn   = document.getElementById('nhsBtn');
+const infoBtn  = document.getElementById('infoBtn');
 const replayBtn= document.getElementById('replayBtn');
 const finalCard= document.getElementById('finalCard');
 const startScr = document.getElementById('startScreen');
 
-let subTimer = null;
-let lineIdx  = 0;
-
 function startExperience(){
   startScr.classList.add('hidden');
-
-  // Play with sound — user gesture guarantees this works
   video.muted = false;
-  video.play().catch(() => {
-    // fallback: some browsers still block; play anyway
-    video.play();
-  });
-
-  nhsBtn.classList.add('visible');
+  video.play().catch(() => video.play());
+  infoBtn.classList.add('visible');
   replayBtn.classList.add('visible');
-
-  beginSubs();
   setTimeout(showFinal, 26000);
-}
-
-function beginSubs(){
-  lineIdx = 0;
-  clearTimeout(subTimer);
-  subBox.classList.add('visible');
-  scheduleNext();
-}
-
-function scheduleNext(){
-  if(lineIdx >= lines.length) return;
-  const line  = lines[lineIdx];
-  const delay = Math.max((line.t * 1000) - (video.currentTime * 1000 || 0), 0);
-  subTimer = setTimeout(() => {
-    subText.innerHTML = line.text;
-    lineIdx++;
-    scheduleNext();
-  }, delay);
 }
 
 video.addEventListener('ended', showFinal);
 
 function showFinal(){
-  clearTimeout(subTimer);
-  subBox.classList.remove('visible');
   setTimeout(() => finalCard.classList.add('visible'), 500);
 }
 
 function replay(){
   finalCard.classList.remove('visible');
-  subText.innerHTML = '';
-  lineIdx = 0;
-  clearTimeout(subTimer);
   video.currentTime = 0;
   video.play().catch(()=>{});
-  setTimeout(() => {
-    subBox.classList.add('visible');
-    beginSubs();
-  }, 400);
 }
 </script>
 </body>
 </html>
+
