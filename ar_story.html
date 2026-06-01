@@ -3,285 +3,186 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>One Drop Saves Lives — AR Story</title>
+<title>One Drop Saves Lives</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{
   width:100%;height:100%;overflow:hidden;
-  background:#0A0000;
+  background:#000;
   font-family:'Segoe UI',Arial,sans-serif;
-  color:white;
 }
 
-/* ── CAMERA BG SIMULATION ── */
-.camera-bg{
-  position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 60%, #1A0505 0%, #050000 100%);
+/* ── VIDEO (fullscreen) ── */
+#bgVideo{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  min-width:100%;min-height:100%;
+  width:auto;height:auto;
+  object-fit:cover;
   z-index:0;
 }
 
-/* scan line animation */
-.scan-line{
-  position:fixed;
-  left:0;right:0;height:2px;
-  background:linear-gradient(90deg, transparent, rgba(200,16,46,0.6), transparent);
-  z-index:1;
-  animation:scanMove 3s ease-in-out infinite;
-  opacity:0;
-}
-@keyframes scanMove{
-  0%{top:-2px;opacity:0}
-  10%{opacity:1}
-  90%{opacity:1}
-  100%{top:100%;opacity:0}
-}
-
-/* AR corner brackets */
-.brackets{
-  position:fixed;inset:0;z-index:2;pointer-events:none;
-}
-.bracket{
-  position:absolute;width:40px;height:40px;
-  border-color:#C8102E;border-style:solid;opacity:0.7;
-}
-.bracket.tl{top:20px;left:20px;border-width:3px 0 0 3px}
-.bracket.tr{top:20px;right:20px;border-width:3px 3px 0 0}
-.bracket.bl{bottom:20px;left:20px;border-width:0 0 3px 3px}
-.bracket.br{bottom:20px;right:20px;border-width:0 3px 3px 0}
-
-/* ── LOADING SCREEN ── */
-.screen{
-  position:fixed;inset:0;z-index:10;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:20px;
-  transition:opacity 0.8s ease;
-}
-.screen.hidden{opacity:0;pointer-events:none;}
-
-.loading-drop{
-  width:60px;height:75px;animation:dropPulse 1s ease-in-out infinite alternate;
-}
-@keyframes dropPulse{from{transform:scale(1)}to{transform:scale(1.1)}}
-
-.loading-title{font-size:22px;font-weight:700;color:#C8102E;letter-spacing:.05em;}
-.loading-sub{font-size:13px;color:rgba(255,255,255,0.5);text-align:center;max-width:240px;line-height:1.6;}
-
-.loading-bar-wrap{width:180px;height:3px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;}
-.loading-bar{height:100%;background:#C8102E;border-radius:99px;animation:loadBar 2.5s ease forwards;}
-@keyframes loadBar{from{width:0%}to{width:100%}}
-
-/* ── AR PERSON CONTAINER ── */
-.ar-person{
-  position:fixed;
-  bottom:0;left:50%;transform:translateX(-50%);
-  z-index:5;
-  width:280px;
-  display:flex;flex-direction:column;align-items:center;
-  opacity:0;
-  transition:opacity 1s ease, transform 1s ease;
-  transform:translateX(-50%) translateY(30px);
-}
-.ar-person.visible{
-  opacity:1;
-  transform:translateX(-50%) translateY(0);
-}
-
-/* Person silhouette / avatar */
-.person-figure{
-  position:relative;
-  width:200px;height:320px;
-  display:flex;align-items:flex-end;justify-content:center;
-}
-
-/* Head */
-.p-head{
-  position:absolute;
-  top:0;left:50%;transform:translateX(-50%);
-  width:72px;height:72px;border-radius:50%;
-  background:linear-gradient(145deg, #8B6348, #6B4530);
-  border:2px solid rgba(200,16,46,0.4);
-}
-/* hair */
-.p-head::before{
-  content:'';position:absolute;
-  top:-8px;left:-4px;right:-4px;height:30px;
-  background:#1A0A00;border-radius:50% 50% 0 0 / 60% 60% 0 0;
-}
-/* face highlight */
-.p-head::after{
-  content:'';position:absolute;
-  top:18px;left:14px;width:12px;height:8px;
-  background:rgba(255,255,255,0.12);border-radius:50%;
-}
-
-/* Neck -->
-.p-neck{
-  position:absolute;
-  top:68px;left:50%;transform:translateX(-50%);
-  width:22px;height:20px;
-  background:#7A5438;
-}
-
-/* Body -->
-.p-body{
-  position:absolute;
-  top:84px;left:50%;transform:translateX(-50%);
-  width:90px;height:150px;border-radius:12px 12px 8px 8px;
-  background:linear-gradient(160deg, #C8102E 0%, #8B0A1F 100%);
-  border:1px solid rgba(255,255,255,0.1);
-}
-/* collar -->
-.p-body::before{
-  content:'';position:absolute;
-  top:0;left:50%;transform:translateX(-50%);
-  width:0;height:0;
-  border-left:14px solid transparent;
-  border-right:14px solid transparent;
-  border-top:20px solid #0A0000;
-}
-
-/* Arms -->
-.p-arm-l{
-  position:absolute;
-  top:90px;left:12px;
-  width:22px;height:110px;border-radius:11px;
-  background:linear-gradient(160deg,#C8102E,#8B0A1F);
-  transform:rotate(8deg);transform-origin:top center;
-  animation:armSwayL 4s ease-in-out infinite;
-}
-.p-arm-r{
-  position:absolute;
-  top:90px;right:12px;
-  width:22px;height:110px;border-radius:11px;
-  background:linear-gradient(160deg,#C8102E,#8B0A1F);
-  transform:rotate(-8deg);transform-origin:top center;
-  animation:armSwayR 4s ease-in-out infinite;
-}
-@keyframes armSwayL{0%,100%{transform:rotate(8deg)}50%{transform:rotate(4deg)}}
-@keyframes armSwayR{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(-4deg)}}
-
-/* Hands -->
-.p-hand-l,.p-hand-r{
-  position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
-  width:18px;height:18px;border-radius:50%;
-  background:#8B6348;
-}
-
-/* Legs -->
-.p-leg-l{
-  position:absolute;
-  bottom:0;left:30px;
-  width:34px;height:90px;border-radius:8px 8px 12px 12px;
-  background:#1A1A1A;
-}
-.p-leg-r{
-  position:absolute;
-  bottom:0;right:30px;
-  width:34px;height:90px;border-radius:8px 8px 12px 12px;
-  background:#1A1A1A;
-}
-
-/* Glow / AR effect around person */
-.person-glow{
-  position:absolute;inset:-20px;
-  border-radius:50%;
-  background:radial-gradient(ellipse at 50% 70%, rgba(200,16,46,0.15) 0%, transparent 70%);
-  animation:glowPulse 2s ease-in-out infinite alternate;
-}
-@keyframes glowPulse{from{opacity:.6}to{opacity:1}}
-
-/* AR scan lines over person */
-.person-scanlines{
-  position:absolute;inset:0;
-  background:repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(200,16,46,0.04) 3px, rgba(200,16,46,0.04) 4px);
-  pointer-events:none;border-radius:inherit;
-}
-
-/* ── SPEECH BUBBLE / SUBTITLE ── */
-.subtitle-wrap{
-  position:fixed;
-  bottom:0;left:0;right:0;
-  z-index:8;
-  padding:0 16px 32px;
-}
-
-.subtitle-box{
-  background:rgba(0,0,0,0.82);
-  border:1px solid rgba(200,16,46,0.4);
-  border-radius:16px;
-  padding:16px 20px;
-  backdrop-filter:blur(8px);
-  min-height:72px;
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity 0.5s ease;
-}
-.subtitle-box.visible{opacity:1;}
-
-.subtitle-text{
-  font-size:17px;line-height:1.5;
-  text-align:center;color:white;
-  font-weight:400;
-  letter-spacing:.01em;
-}
-.subtitle-text em{
-  font-style:normal;
-  color:#F5D97A;
-  font-weight:600;
+/* dark overlay so subtitles readable */
+.overlay{
+  position:fixed;inset:0;z-index:1;
+  background:linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.25) 0%,
+    rgba(0,0,0,0.05) 40%,
+    rgba(0,0,0,0.55) 75%,
+    rgba(0,0,0,0.88) 100%
+  );
 }
 
 /* ── TOP HUD ── */
 .hud{
-  position:fixed;
-  top:0;left:0;right:0;
-  z-index:9;
-  padding:14px 20px;
+  position:fixed;top:0;left:0;right:0;z-index:10;
+  padding:18px 20px 10px;
   display:flex;justify-content:space-between;align-items:center;
-  background:linear-gradient(180deg,rgba(0,0,0,0.7) 0%,transparent 100%);
+  background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,transparent 100%);
 }
-.hud-left{font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:.1em;text-transform:uppercase;}
-.hud-right{
+.hud-label{
+  font-size:11px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,0.65);
+}
+.live-badge{
   display:flex;align-items:center;gap:6px;
-  font-size:11px;color:#C8102E;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  font-size:11px;font-weight:700;
+  color:#C8102E;letter-spacing:.08em;text-transform:uppercase;
 }
-.hud-dot{width:7px;height:7px;border-radius:50%;background:#C8102E;animation:blink 1.2s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-
-/* ── FINAL CARD ── */
-.final-card{
-  position:fixed;inset:0;z-index:20;
-  background:rgba(10,0,0,0.95);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:20px;padding:32px 28px;
-  opacity:0;pointer-events:none;
-  transition:opacity 1s ease;
-  text-align:center;
+.live-dot{
+  width:7px;height:7px;border-radius:50%;background:#C8102E;
+  animation:blink 1.3s ease-in-out infinite;
 }
-.final-card.visible{opacity:1;pointer-events:all;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
 
-.final-drop{width:64px;height:80px;animation:dropPulse 1.5s ease-in-out infinite alternate;}
-.final-title{font-size:36px;font-weight:900;color:#C8102E;line-height:1.1;}
-.final-sub{font-size:16px;color:rgba(255,255,255,0.7);line-height:1.6;max-width:280px;}
-.final-stat{
-  font-size:52px;font-weight:900;color:white;line-height:1;
+/* ── SUBTITLE ── */
+.subtitle-wrap{
+  position:fixed;
+  bottom:110px;left:0;right:0;
+  z-index:10;
+  padding:0 20px;
+  display:flex;justify-content:center;
 }
-.final-stat span{font-size:18px;color:rgba(255,255,255,0.5);font-weight:400;display:block;margin-top:4px;}
+.subtitle-box{
+  background:rgba(0,0,0,0.72);
+  border:1px solid rgba(200,16,46,0.35);
+  border-radius:14px;
+  padding:14px 20px;
+  max-width:360px;
+  width:100%;
+  backdrop-filter:blur(6px);
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity 0.4s ease, transform 0.4s ease;
+  min-height:60px;
+  display:flex;align-items:center;justify-content:center;
+}
+.subtitle-box.visible{
+  opacity:1;transform:translateY(0);
+}
+.subtitle-text{
+  font-size:16px;line-height:1.55;
+  text-align:center;color:white;font-weight:400;
+}
+.subtitle-text em{
+  font-style:normal;color:#F5D97A;font-weight:600;
+}
 
-.cta-btn{
-  margin-top:8px;
-  padding:16px 40px;
+/* ── NHS BUTTON (always visible at bottom) ── */
+.bottom-bar{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:10;
+  padding:12px 20px 28px;
+  background:linear-gradient(0deg,rgba(0,0,0,0.75) 0%,transparent 100%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.nhs-btn{
+  width:100%;max-width:320px;
+  padding:15px 24px;
   background:#C8102E;color:white;
-  font-size:16px;font-weight:700;
-  border:none;border-radius:99px;cursor:pointer;
-  letter-spacing:.05em;
-  animation:ctaPulse 2s ease-in-out infinite;
+  font-size:15px;font-weight:700;
+  border:none;border-radius:99px;
+  cursor:pointer;
+  letter-spacing:.03em;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  text-decoration:none;
+  animation:btnGlow 2.5s ease-in-out infinite;
+  opacity:0;
+  transform:translateY(10px);
+  transition:opacity 0.6s ease, transform 0.6s ease;
 }
-@keyframes ctaPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,16,46,0.5)}50%{box-shadow:0 0 0 14px rgba(200,16,46,0)}}
+.nhs-btn.visible{opacity:1;transform:translateY(0);}
+.nhs-btn:hover{opacity:.88;}
+@keyframes btnGlow{
+  0%,100%{box-shadow:0 0 0 0 rgba(200,16,46,0.45)}
+  50%{box-shadow:0 0 0 10px rgba(200,16,46,0)}
+}
+.nhs-icon{
+  width:22px;height:22px;background:white;border-radius:4px;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.nhs-icon span{font-size:9px;font-weight:900;color:#003087;letter-spacing:-.5px;}
 
 .replay-btn{
-  font-size:13px;color:rgba(255,255,255,0.4);
+  font-size:12px;color:rgba(255,255,255,0.4);
+  background:transparent;border:none;cursor:pointer;
+  text-decoration:underline;
+  opacity:0;transition:opacity 0.6s ease;
+}
+.replay-btn.visible{opacity:1;}
+
+/* ── FINAL OVERLAY ── */
+.final-overlay{
+  position:fixed;inset:0;z-index:20;
+  background:rgba(0,0,0,0.92);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:18px;padding:36px 28px;
+  text-align:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.9s ease;
+}
+.final-overlay.visible{opacity:1;pointer-events:all;}
+
+.final-drop{
+  width:56px;height:70px;
+  animation:dropPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes dropPulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+
+.final-title{
+  font-size:34px;font-weight:900;color:white;line-height:1.1;
+}
+.final-title em{font-style:normal;color:#C8102E;}
+
+.final-stat{
+  font-size:58px;font-weight:900;color:#C8102E;line-height:1;
+}
+.final-stat-label{font-size:14px;color:rgba(255,255,255,0.5);margin-top:-4px;}
+
+.final-sub{
+  font-size:15px;color:rgba(255,255,255,0.65);
+  line-height:1.6;max-width:280px;
+}
+
+.final-nhs-btn{
+  width:100%;max-width:300px;
+  padding:16px 24px;
+  background:#C8102E;color:white;
+  font-size:16px;font-weight:700;
+  border:none;border-radius:99px;
+  cursor:pointer;
+  text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  animation:btnGlow 2.5s ease-in-out infinite;
+}
+.final-replay{
+  font-size:13px;color:rgba(255,255,255,0.35);
   background:transparent;border:none;cursor:pointer;
   text-decoration:underline;
 }
@@ -289,142 +190,132 @@ html,body{
 </head>
 <body>
 
-<!-- Camera background -->
-<div class="camera-bg"></div>
-<div class="scan-line"></div>
+<!-- BACKGROUND VIDEO -->
+<video id="bgVideo" playsinline autoplay muted>
+  <source src="story_video.mp4" type="video/mp4">
+</video>
 
-<!-- AR brackets -->
-<div class="brackets">
-  <div class="bracket tl"></div>
-  <div class="bracket tr"></div>
-  <div class="bracket bl"></div>
-  <div class="bracket br"></div>
-</div>
+<div class="overlay"></div>
 
 <!-- HUD -->
 <div class="hud">
-  <div class="hud-left">AR Experience</div>
-  <div class="hud-right"><div class="hud-dot"></div> Live</div>
+  <div class="hud-label">One Drop Saves Lives</div>
+  <div class="live-badge"><div class="live-dot"></div> AR Story</div>
 </div>
 
-<!-- Loading screen -->
-<div class="screen" id="loadScreen">
-  <svg class="loading-drop" viewBox="0 0 60 75" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M30 5 Q8 32 8 50 Q8 66 30 70 Q52 66 52 50 Q52 32 30 5Z" fill="#C8102E"/>
-    <path d="M30 20 Q16 38 16 50 Q16 58 24 63" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-linecap="round" fill="none"/>
-  </svg>
-  <div class="loading-title">One Drop Saves Lives</div>
-  <div class="loading-sub">Scanning for AR experience…</div>
-  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
-</div>
-
-<!-- AR person figure -->
-<div class="ar-person" id="arPerson">
-  <div class="person-figure">
-    <div class="person-glow"></div>
-    <div class="p-head"></div>
-    <div class="p-neck"></div>
-    <div class="p-body"></div>
-    <div class="p-arm-l"><div class="p-hand-l"></div></div>
-    <div class="p-arm-r"><div class="p-hand-r"></div></div>
-    <div class="p-leg-l"></div>
-    <div class="p-leg-r"></div>
-    <div class="person-scanlines"></div>
-  </div>
-</div>
-
-<!-- Subtitle box -->
+<!-- SUBTITLES -->
 <div class="subtitle-wrap">
-  <div class="subtitle-box" id="subtitleBox">
-    <div class="subtitle-text" id="subtitleText"></div>
+  <div class="subtitle-box" id="subBox">
+    <div class="subtitle-text" id="subText"></div>
   </div>
 </div>
 
-<!-- Final card -->
-<div class="final-card" id="finalCard">
-  <svg class="final-drop" viewBox="0 0 60 75" fill="none">
-    <path d="M30 5 Q8 32 8 50 Q8 66 30 70 Q52 66 52 50 Q52 32 30 5Z" fill="#C8102E"/>
-    <path d="M30 20 Q16 38 16 50 Q16 58 24 63" stroke="rgba(255,255,255,0.25)" stroke-width="3" stroke-linecap="round" fill="none"/>
+<!-- BOTTOM NHS BUTTON -->
+<div class="bottom-bar">
+  <a class="nhs-btn" id="nhsBtn"
+     href="https://www.blood.co.uk/the-donation-process/simple-steps-to-giving-blood/"
+     target="_blank">
+    <div class="nhs-icon"><span>NHS</span></div>
+    Register to donate blood →
+  </a>
+  <button class="replay-btn" id="replayBtn" onclick="replay()">Watch again</button>
+</div>
+
+<!-- FINAL CARD -->
+<div class="final-overlay" id="finalCard">
+  <svg class="final-drop" viewBox="0 0 56 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M28 4 Q6 30 6 46 Q6 62 28 66 Q50 62 50 46 Q50 30 28 4Z" fill="#C8102E"/>
+    <path d="M28 18 Q14 36 14 48 Q14 56 22 61" stroke="rgba(255,255,255,0.22)" stroke-width="3" stroke-linecap="round" fill="none"/>
   </svg>
-  <div class="final-title">One Donor.<br>Saves Three Lives.</div>
-  <div class="final-sub">You could be the reason someone gets their life back.</div>
-  <div class="final-stat">3 <span>lives saved per donation</span></div>
-  <button class="cta-btn" onclick="openNHS()">Register to donate →</button>
-  <button class="replay-btn" onclick="replay()">Watch again</button>
+
+  <div class="final-title">One Donor.<br><em>Saves Three Lives.</em></div>
+  <div class="final-stat">3</div>
+  <div class="final-stat-label">lives saved per donation</div>
+  <div class="final-sub">You could be the reason someone gets their life back. Register today — it takes 5 minutes.</div>
+
+  <a class="final-nhs-btn"
+     href="https://www.blood.co.uk/the-donation-process/simple-steps-to-giving-blood/"
+     target="_blank">
+    <div class="nhs-icon"><span>NHS</span></div>
+    Register to donate blood →
+  </a>
+  <button class="final-replay" onclick="replay()">Watch again</button>
 </div>
 
 <script>
-// ── SUBTITLES timed to 25 seconds ──────────────────────────────
+// ── SUBTITLES — timed to 25 seconds ──────────────────────────
 const lines = [
-  { t: 0,    text: "I always know the exact moment the <em>relief starts kicking in</em>." },
-  { t: 3.5,  text: "My body feels lighter… and the pain <em>slowly fades away</em>." },
+  { t: 0,    text: "I always know the exact moment the <em>relief starts kicking in.</em>" },
+  { t: 3.5,  text: "My body feels lighter… and the pain <em>slowly fades away.</em>" },
   { t: 7,    text: "Suddenly, I'm not thinking about hospitals anymore." },
-  { t: 10,   text: "I'm thinking about school, hanging out with friends… <em>just living</em>." },
-  { t: 14,   text: "When you have sickle cell, donors don't just give you blood —" },
-  { t: 17.5, text: "<em>you give us our lives back.</em>" },
+  { t: 10,   text: "I'm thinking about school, friends… <em>just living.</em>" },
+  { t: 13.5, text: "When you have sickle cell, donors don't just give you blood —" },
+  { t: 17,   text: "<em>you give us our lives back.</em>" },
   { t: 20,   text: "Your one donation can change my week, my month… <em>my lifetime.</em>" },
 ];
-const TOTAL = 25000;
 
-let startTime = null;
-let subtitleTimer = null;
-let lineIndex = 0;
+const video    = document.getElementById('bgVideo');
+const subBox   = document.getElementById('subBox');
+const subText  = document.getElementById('subText');
+const nhsBtn   = document.getElementById('nhsBtn');
+const replayBtn= document.getElementById('replayBtn');
+const finalCard= document.getElementById('finalCard');
 
-const loadScreen  = document.getElementById('loadScreen');
-const arPerson    = document.getElementById('arPerson');
-const subtitleBox = document.getElementById('subtitleBox');
-const subtitleTxt = document.getElementById('subtitleText');
-const finalCard   = document.getElementById('finalCard');
+let subTimer = null;
+let lineIdx  = 0;
 
-// Start after loading bar (2.5s)
-setTimeout(startExperience, 2600);
+// Show NHS button immediately
+nhsBtn.classList.add('visible');
+replayBtn.classList.add('visible');
 
-function startExperience(){
-  loadScreen.classList.add('hidden');
-  setTimeout(()=>{
-    arPerson.classList.add('visible');
-    subtitleBox.classList.add('visible');
-    startTime = Date.now();
-    lineIndex = 0;
-    scheduleNext();
-  }, 400);
-  // End experience after 25s
-  setTimeout(showFinal, TOTAL + 800);
+// Start subtitles when video plays
+video.addEventListener('play', startSubs);
+
+// If video can't load (no file yet), start subs after 1s anyway
+video.addEventListener('error', () => setTimeout(startSubs, 1000));
+setTimeout(() => {
+  if(video.paused) startSubs();
+}, 1500);
+
+function startSubs(){
+  lineIdx = 0;
+  clearTimeout(subTimer);
+  subBox.classList.add('visible');
+  scheduleNext();
 }
 
 function scheduleNext(){
-  if(lineIndex >= lines.length) return;
-  const line = lines[lineIndex];
-  const delay = line.t * 1000 - (Date.now() - startTime);
-  subtitleTimer = setTimeout(()=>{
-    subtitleTxt.innerHTML = line.text;
-    lineIndex++;
+  if(lineIdx >= lines.length) return;
+  const line  = lines[lineIdx];
+  const delay = Math.max((line.t * 1000) - (video.currentTime * 1000 || 0), 0);
+  subTimer = setTimeout(() => {
+    subText.innerHTML = line.text;
+    lineIdx++;
     scheduleNext();
-  }, Math.max(delay, 0));
+  }, delay);
 }
+
+// Show final card when video ends (or after 26s)
+video.addEventListener('ended', showFinal);
+setTimeout(showFinal, 26000);
 
 function showFinal(){
-  subtitleBox.classList.remove('visible');
-  arPerson.classList.remove('visible');
-  setTimeout(()=>{ finalCard.classList.add('visible'); }, 600);
-}
-
-function openNHS(){
-  window.open('https://www.blood.co.uk/the-donation-process/simple-steps-to-giving-blood/', '_blank');
+  clearTimeout(subTimer);
+  subBox.classList.remove('visible');
+  setTimeout(() => { finalCard.classList.add('visible'); }, 500);
 }
 
 function replay(){
   finalCard.classList.remove('visible');
-  lineIndex = 0;
-  clearTimeout(subtitleTimer);
-  subtitleTxt.innerHTML = '';
-  setTimeout(()=>{
-    arPerson.classList.add('visible');
-    subtitleBox.classList.add('visible');
-    startTime = Date.now();
-    scheduleNext();
-    setTimeout(showFinal, TOTAL + 800);
-  }, 600);
+  subText.innerHTML = '';
+  lineIdx = 0;
+  clearTimeout(subTimer);
+  video.currentTime = 0;
+  video.play().catch(()=>{});
+  setTimeout(() => {
+    subBox.classList.add('visible');
+    startSubs();
+  }, 400);
 }
 </script>
 </body>
