@@ -13,12 +13,20 @@ const FIREBASE_CONFIG = {
   databaseURL: "https://bloodpanel-dd4ae-default-rtdb.firebaseio.com"
 };
 
-// ── Replace with your actual AR / TGA Ci platform URL ──
 const AR_URL = "https://suminkim3797-dot.github.io/Blood_Donation/ar_story.html";
 
 firebase.initializeApp(FIREBASE_CONFIG);
-firebase.database().ref("bloodpack/scans").transaction(n => (n || 0) + 1);
-window.location.replace(AR_URL);
+
+// Wait for transaction to complete BEFORE redirecting
+firebase.database().ref("bloodpack/scans")
+  .transaction(n => (n || 0) + 1)
+  .then(() => {
+    window.location.replace(AR_URL);
+  })
+  .catch(() => {
+    // Even if it fails, still redirect
+    window.location.replace(AR_URL);
+  });
 </script>
 </body>
 </html>
